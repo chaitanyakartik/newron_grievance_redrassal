@@ -1,0 +1,6 @@
+dotenv
+fastapi
+pydantic
+uvicorn
+google-cloud-aiplatform
+streamlit
