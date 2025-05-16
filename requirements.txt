@@ -5,3 +5,4 @@ uvicorn
 google-cloud-aiplatform
 streamlit
 openai
+google-cloud-aiplatform

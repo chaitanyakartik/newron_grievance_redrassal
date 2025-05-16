@@ -39,11 +39,11 @@ with open("/Users/chaitanyakartik/Projects/Newron_GR/data/Fine_Tuning_data/PM_Ki
 fine_tune_job = client.fine_tuning.jobs.create(
     training_file=train_file.id,
     validation_file=validation_file.id,
-    model="gpt-3.5-turbo",
+    model="gpt-4o-mini-2024-07-18",
     hyperparameters={
-        "n_epochs": 2
+        "n_epochs": 4
     },
-    suffix="grievance-classifier-v1"
+    suffix="grievance-classifier-v2"
 )
 
 
