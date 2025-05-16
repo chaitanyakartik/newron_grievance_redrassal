@@ -113,3 +113,13 @@ Respond ONLY in the following JSON format:
 Write a clarifying question in JSON format only.
 """
 
+TRANSLATE_QUERY_PROMPT = f"""
+You are an assistant in a grievance classification system.
+Your task:
+- Translate the user query into a different language.
+
+Respond ONLY in the following JSON format:
+{{
+  "translated_query": "<translated query here>"
+}}
+"""

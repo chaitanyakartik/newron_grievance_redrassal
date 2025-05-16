@@ -4,7 +4,7 @@ import json
 import os
 from dotenv import load_dotenv
 from typing import List, Optional, Union
-from utils.constants import department_tree, QUERY_CLASSIFIER_PROMPT, GENERATE_RELEVANT_QUESTIONS_PROMPT,REFORMAT_QUERY_PROMPT
+from utils.constants import department_tree, QUERY_CLASSIFIER_PROMPT, GENERATE_RELEVANT_QUESTIONS_PROMPT,REFORMAT_QUERY_PROMPT, TRANSLATE_QUERY_PROMPT
 load_dotenv()
 
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -143,5 +143,24 @@ async def generate_relevant_questions(query: str, current_level_options: list, h
     result = json.loads(response.text).get("clarifying_question", "")
     return result
 
+
+def translate_query(query: str, target_language="English"):
+    template_parts=[
+        TRANSLATE_QUERY_PROMPT,
+        f"Translate the following query to {target_language}:",
+        f"User Query: {query}"
+    ]
+
+    template = "\n\n".join(template_parts)
+    response=generate_content(
+        [Content(role="user", parts=[Part.from_text(template)])],
+        generation_config={
+            "temperature": 0.125,
+            "response_mime_type": "application/json",
+        },
+    )
+    result = json.loads(response.text).get("translated_query", "")
+    print(result)
+    return result
 
     
