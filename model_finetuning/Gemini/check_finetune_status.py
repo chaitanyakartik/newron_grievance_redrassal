@@ -1,40 +1,15 @@
-from google.cloud import aiplatform
+import google.auth
+from google.auth.transport.requests import AuthorizedSession
 
-# Set your project and location
-PROJECT_ID = "myproject"
+PROJECT_ID = "573969935641"
 LOCATION = "us-central1"
+TUNING_JOB_ID = "6988361370588676096"
 
-def list_tuning_jobs():
-    aiplatform.init(project=PROJECT_ID, location=LOCATION)
+credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+authed_session = AuthorizedSession(credentials)
 
-    # List all tuning jobs in the location
-    tuning_jobs = aiplatform.TuningJob.list()
+endpoint = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/tuningJobs/{TUNING_JOB_ID}"
 
-    if not tuning_jobs:
-        print("No tuning jobs found.")
-        return
-
-    for job in tuning_jobs:
-        print(f"Name: {job.resource_name}")
-        print(f"Display Name: {job.display_name}")
-        print(f"State: {job.state.name}")  # Job state enum, e.g. JOB_STATE_SUCCEEDED
-        print(f"Create Time: {job.create_time}")
-        print(f"Update Time: {job.update_time}")
-        print("-" * 40)
-
-if __name__ == "__main__":
-    list_tuning_jobs()
-
-
-def get_tuning_job_status(tuning_job_name: str):
-    aiplatform.init(project=PROJECT_ID, location=LOCATION)
-
-    tuning_job = aiplatform.TuningJob(tuning_job_name)
-    print(f"Job: {tuning_job.resource_name}")
-    print(f"Display Name: {tuning_job.display_name}")
-    print(f"State: {tuning_job.state.name}")
-    print(f"Create Time: {tuning_job.create_time}")
-    print(f"Update Time: {tuning_job.update_time}")
-
-
-get_tuning_job_status("projects/myproject/locations/us-central1/tuningJobs/1234567890123456789")
+response = authed_session.get(endpoint)
+print(response.status_code)
+print(response.json())
