@@ -1,16 +1,18 @@
-from openai import OpenAI
-import os
-from dotenv import load_dotenv
-load_dotenv()
-openai_api_key = os.getenv("Openai_api_key")
-os.environ["OPENAI_API_KEY"]=openai_api_key
+from utils.chat_utils import query_classifier, History
+import asyncio
 
-client = OpenAI()
+# Example history list using the History class
+example_history = [
+    History(role="user", content="I have a prpoblem with my room"),
+    History(role="assistant", content="What specifically is the problem with your room?  Is it related to cleanliness, maintenance, facilities, or something else?"),
+]
 
-job_id = "ftjob-YfCitBFp8HQn5UvuybRvcLrV"
+async def main():
+    result = await query_classifier(
+        query="I submitted my application for the Kisan Samman Nidhi Scheme through the CSC Center however, it has yet to receive approval from the Karnataka state government. Could you kindly verify and confirm our details?",
+        history=example_history,
+        dept_path=[]
+    )
+    print(result)
 
-jobs = client.fine_tuning.jobs.list()
-for job in jobs.data:
-    if job.id == job_id:
-        print(job.status)
-        break
+asyncio.run(main())

@@ -3,6 +3,5 @@ fastapi
 pydantic
 uvicorn
 google-cloud-aiplatform
-streamlit
-openai
-google-cloud-aiplatform
+vertexai
+python-dotenv

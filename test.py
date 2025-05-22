@@ -1,52 +1,29 @@
-import google.auth
-from google.auth.transport.requests import Request
 import requests
 
-credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
-credentials.refresh(Request())
-access_token = credentials.token
+# Define the API endpoint
+url = "http://34.93.126.124:8000/classify"  # Replace with the actual URL if deployed elsewhere
 
-print(f"\n✅ Authenticated as: {getattr(credentials, 'service_account_email', 'user account')}")
-print(f"✅ Project ID: {project_id}")
+# Define the test payload
+payload = {
+    "query": "I need help with my PM-KISAN application.",
+    "history": [
+        {"role": "user", "content": "I submitted my application but it hasn't been processed."},
+        {"role": "assistant", "content": "Can you provide more details about your application?"}
+    ],
+    "dept_path": ["AGRICULTURE DEPARTMENT"]
+}
 
-permissions_to_test = [
-    "aiplatform.tuningJobs.list",
-    "aiplatform.tuningJobs.create",
-    "aiplatform.models.upload",
-    "aiplatform.models.list",
-]
+# Send a POST request to the endpoint
+try:
+    response = requests.post(url, json=payload)
 
-url = f"https://cloudresourcemanager.googleapis.com/v1/projects/{project_id}:testIamPermissions"
-
-response = requests.post(
-    url,
-    headers={"Authorization": f"Bearer {access_token}"},
-    json={"permissions": permissions_to_test}
-)
-
-print("\n🔍 Vertex AI Permissions:")
-if response.status_code == 200:
-    granted = response.json().get("permissions", [])
-    for p in permissions_to_test:
-        print(f" - {p}: {'✅' if p in granted else '❌'}")
-else:
-    print(f"❌ Error {response.status_code}: {response.text}")
-
-
-
-
-
-
-
-
-
-
-# grievance-redressal-train-data
-
-
-# gsutil cp /Users/chaitanyakartik/Projects/Newron_GR/model_finetuning/Gemini/train_gemini.jsonl gs://grievance-redressal-train-data/train_data.jsonl
-# gsutil cp /Users/chaitanyakartik/Projects/Newron_GR/model_finetuning/Gemini/test_gemini.jsonl gs://grievance-redressal-train-data/test_data.jsonl
-
-
-# gs://grievance-redressal-train-data/test_data.jsonl
-# gs://grievance-redressal-train-data/train_data.jsonl
+    # Print the response
+    if response.status_code == 200:
+        print("Success!")
+        print("Response:", response.json())
+    else:
+        print("Failed!")
+        print("Status Code:", response.status_code)
+        print("Response:", response.text)
+except requests.exceptions.RequestException as e:
+    print(f"An error occurred: {e}")

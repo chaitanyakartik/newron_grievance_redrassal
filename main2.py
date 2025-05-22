@@ -17,9 +17,8 @@ class ChatRequest(BaseModel):
     query: str
     history: Optional[List[HistoryItem]] = None
     dept_path: Optional[List[str]] = None  # Optional department path
-    session_id: str  # Optional session ID
 
-@app.post("/continue_chat_classify")
+@app.post("/classify")
 async def classify_grievance(request: ChatRequest):
     """
     Endpoint to classify a grievance query.
@@ -31,45 +30,18 @@ async def classify_grievance(request: ChatRequest):
             history.append(HistoryItem(role=item.role, content=item.content))
 
         # Call the query_classifier function
-        result, path = await query_classifier(
+        result = await query_classifier(
             query=request.query,
             history=history,
-            dept_path=request.dept_path or [],
-            chat_session_id=request.session_id
+            dept_path=request.dept_path or []
         )
 
-        print(path)
-
-        return {"result": result,
-                "path": path}
+        return {"result": result}
 
     except Exception as e:
         # Handle exceptions and return a 500 error
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.get("/initate_chat")
-async def initiate_chat():
-    """
-    Endpoint to initiate a chat session.
-    """
-    # This could be used to initialize any resources or state for the chat session
-    import uuid
-
-    random_id = str(uuid.uuid4())
-
-    return {
-            "message": "Chat session initiated.",
-            "session_id": random_id
-            }
-
-
-@app.get("/health")
-async def health_check():
-    """
-    Health check endpoint.
-    """
-    return {"status": "ok"}
-
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
