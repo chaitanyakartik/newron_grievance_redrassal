@@ -1,0 +1,21 @@
+{
+  "session_id": "90e43118-ff24-439c-a5d2-df6fbdb59135",
+  "history": [
+    {
+      "role": "user",
+      "content": "i have a problem with my application process, agriculture related, related to crop survey"
+    },
+    {
+      "role": "assistant",
+      "content": "Is your application already submitted but not processed, or is it not being accepted at the RSK (Remote Sensing Kit) stage?"
+    }
+  ],
+  "current_path": [
+    "AGRICULTURE DEPARTMENT",
+    "DEPARTMENT OF AGRICULTURE",
+    "KARNATAKA CROP SURVEY- TO CAPTURE THE DETAILS OF CROPS GROWN BY THE FARMING COMMUNITY",
+    "ISSUES RELATED TO APPLICATION"
+  ],
+  "path_final": "False",
+  "last_updated": "2025-05-22T14:17:22.756977"
+}

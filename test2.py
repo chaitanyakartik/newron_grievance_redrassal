@@ -1,18 +1,15 @@
 from utils.chat_utils import query_classifier, History
 import asyncio
-
-# Example history list using the History class
-example_history = [
-    History(role="user", content="I have a prpoblem with my room"),
-    History(role="assistant", content="What specifically is the problem with your room?  Is it related to cleanliness, maintenance, facilities, or something else?"),
-]
-
+        
+        
+query="I submitted my application for the Kisan Samman Nidhi Scheme through the CSC Center however, it has yet to receive approval from the Karnataka state government. Could you kindly verify and confirm our details?",
+query1="i have a problem with my application process, agricutlure realted, related to crop survey"
 async def main():
-    result = await query_classifier(
-        query="I submitted my application for the Kisan Samman Nidhi Scheme through the CSC Center however, it has yet to receive approval from the Karnataka state government. Could you kindly verify and confirm our details?",
-        history=example_history,
-        dept_path=[]
+    result, path = await query_classifier(
+        query=query1,
+        chat_session_id="69ca6c42-0f2e-4e05-8447-825902428c64"
     )
     print(result)
+    print(path)
 
 asyncio.run(main())

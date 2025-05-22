@@ -33,49 +33,6 @@ async def convert_history_to_gemini_format(history: Optional[List[History]]):
             gemini_history.append(Content(role=item.role, parts=[Part.from_text(item.content)]))
     return gemini_history
 
-async def add_to_chat_history(session_id: str, role: str, content: str):
-    """
-    Adds a new message to the chat history in the session file.
-    
-    Args:
-        session_id: The unique session identifier
-        role: The role of the message sender ("user" or "assistant")
-        content: The message content
-    """
-    # Create chat_history directory if it doesn't exist
-    os.makedirs("chat_history", exist_ok=True)
-    
-    # Path to session file
-    session_file_path = f"chat_history/{session_id}.json"
-    
-    # Load existing session data if it exists
-    if os.path.exists(session_file_path):
-        with open(session_file_path, "r") as file:
-            session_data = json.load(file)
-    else:
-        # Create new session data if file doesn't exist
-        session_data = {
-            "session_id": session_id,
-            "history": [],
-            "current_path": [],
-            "path_final": "False",
-            "last_updated": ""
-        }
-    
-    # Add the new message to chat_history
-    session_data["history"].append({
-        "role": role,
-        "content": content
-    })
-    
-    # Update last_updated timestamp
-    session_data["last_updated"] = datetime.now().isoformat()
-    
-    # Save the updated session data
-    with open(session_file_path, "w") as file:
-        json.dump(session_data, file, indent=2)
-
-
 async def get_history_from_sesh_id(chat_session_id: str):
     session_file_path = f"chat_history/{chat_session_id}.json"
     if not os.path.exists(session_file_path):
@@ -127,43 +84,6 @@ async def generate_relevant_questions(query: str, current_level_options: list, h
     result = json.loads(response.text).get("clarifying_question", "")
     return result
 
-
-async def update_reached_final(session_id: str, value: str):
-    """
-    Updates the path_final parameter in the session JSON file.
-    
-    Args:
-        session_id: The unique session identifier
-        value: The value to set for path_final ("True" or "False")
-    """
-    # Create chat_history directory if it doesn't exist
-    os.makedirs("chat_history", exist_ok=True)
-    
-    # Path to session file
-    session_file_path = f"chat_history/{session_id}.json"
-    
-    # Check if the file exists
-    if not os.path.exists(session_file_path):
-        print(f"Session file not found: {session_file_path}")
-        return False
-    
-    try:
-        # Load existing session data
-        with open(session_file_path, "r") as file:
-            session_data = json.load(file)
-        
-        # Update path_final
-        session_data["path_final"] = value
-        
-        # Save the updated session data
-        with open(session_file_path, "w") as file:
-            json.dump(session_data, file, indent=2)
-        
-        return True
-    except Exception as e:
-        print(f"Error updating path_final in session file: {e}")
-        return False
-    
 async def update_dept_path(session_id: str, new_dept_path: List[str]):
     """
     Updates the department path in the session JSON file.
@@ -188,7 +108,6 @@ async def update_dept_path(session_id: str, new_dept_path: List[str]):
             "session_id": session_id,
             "chat_history": [],
             "current_path": [],
-            "path_final": "False",
             "last_updated": ""
         }
     
@@ -277,9 +196,7 @@ async def query_classifier(query: str, chat_session_id: str):
         return result, new_dept_path
     elif nature == "final_path":
         new_history, new_dept_path = await get_history_from_sesh_id(chat_session_id)
-        print("\n\n======FINAL PATH REACHED=========\n\n")
-        update_reached_final(chat_session_id, "True")
-        return result, new_dept_path
+        return result, dept_path
     else:
         print("something broke")
         return None, dept_path
@@ -308,13 +225,13 @@ async def attempt_classification(
     if result.get("status") == "found":
         classified_dept = result.get("classified_department")
         new_dept_path= dept_path + [classified_dept]
-        await update_dept_path(session_id, new_dept_path)
-        is_final = await check_if_final_department(new_dept_path)
+        update_dept_path(session_id, new_dept_path)
+        is_final = check_if_final_department(new_dept_path)
 
         if is_final==True:
             return "final_path", new_dept_path
         else:
-            new_children = await get_next_children(agriculture_tree, new_dept_path)
+            new_children = get_next_children(agriculture_tree, new_dept_path)
             return await attempt_classification(
                 query=query,
                 dept_path=new_dept_path,

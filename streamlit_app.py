@@ -3,21 +3,22 @@ import requests
 import json
 import traceback
 import time
+import os
 from urllib.parse import urljoin, urlparse
 
 # --- Configuration Constants ---
 # API_BASE_URL = "http://34.93.126.124:8000"
 API_BASE_URL="http://127.0.0.1:8000"
-CLASSIFY_ENDPOINT = "/classify"
+CLASSIFY_ENDPOINT = "/continue_chat_classify"
 HEALTH_CHECK_ENDPOINT = "/health" # Common endpoint for health checks
+INITIATE_CHAT_ENDPOINT = "/initiate_chat" # New endpoint for initiating chat sessions
 
 API_URL = urljoin(API_BASE_URL, CLASSIFY_ENDPOINT)
 HEALTH_CHECK_URL = urljoin(API_BASE_URL, HEALTH_CHECK_ENDPOINT)
+INITIATE_CHAT_URL = urljoin(API_BASE_URL, INITIATE_CHAT_ENDPOINT)
 
-# Department Path - as per your example. This might need to be dynamic in a real app.
-DEFAULT_DEPT_PATH = ["AGRICULTURE DEPARTMENT"]
 
-REQUEST_TIMEOUT = 15  # seconds for API calls
+REQUEST_TIMEOUT = 45  # seconds for API calls
 HEALTH_CHECK_TIMEOUT = 5 # seconds for health check
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
@@ -38,22 +39,11 @@ if 'api_operational' not in st.session_state:
     st.session_state.api_operational = None # None: unknown, True: operational, False: error
 if 'current_resolved_path' not in st.session_state:
     st.session_state.current_resolved_path = None  # Store the resolved dept path from the API
+if 'session_id' not in st.session_state:
+    st.session_state.session_id = None  # Store the chat session ID
 
 # --- Sidebar ---
 debug_mode = st.sidebar.checkbox("Debug Mode", value=False)
-# Allow dynamic dept_path for testing if needed, otherwise use default
-custom_dept_path_str = st.sidebar.text_input(
-    "Custom Dept Path (JSON list, e.g., [\"DEPT\"]):",
-    value=json.dumps(DEFAULT_DEPT_PATH)
-)
-try:
-    current_dept_path = json.loads(custom_dept_path_str)
-    if not isinstance(current_dept_path, list):
-        st.sidebar.error("Dept Path must be a valid JSON list of strings.")
-        current_dept_path = DEFAULT_DEPT_PATH
-except json.JSONDecodeError:
-    st.sidebar.error("Invalid JSON for Dept Path. Using default.")
-    current_dept_path = DEFAULT_DEPT_PATH
 
 
 if st.sidebar.button("Force API Health Check"):
@@ -79,15 +69,39 @@ def check_api_health():
     except requests.exceptions.RequestException as e:
         return False, f"API health check error: {str(e)}"
 
-def query_api_with_retries(actual_chat_history, user_query, dept_path): # Added dept_path
+def initiate_new_chat():
+    """Initiates a new chat session with the API and returns the session ID."""
+    try:
+        response = requests.post(INITIATE_CHAT_URL, timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
+        response_data = response.json()
+        return response_data.get("session_id")
+    except Exception as e:
+        if debug_mode:
+            st.sidebar.error(f"Failed to initiate chat session: {str(e)}")
+        return None
+
+def load_chat_session_data(session_id):
+    """Loads the chat session data from the JSON file."""
+    try:
+        file_path = f"chat_sessions/{session_id}.json"
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                return json.load(f)
+        return None
+    except Exception as e:
+        if debug_mode:
+            st.sidebar.error(f"Failed to load chat session data: {str(e)}")
+        return None
+
+def query_api_with_retries(actual_chat_history, user_query, session_id=None): 
     """
     Queries the API with the chat history and user query, including retries.
     'actual_chat_history' should be a list of dicts: [{"role": "user", "content": "..."}, ...]
     """
     payload = {
         "query": user_query,
-        "history": actual_chat_history, # Changed "chat_history" to "history"
-        "dept_path": dept_path         # Added "dept_path"
+        "session_id": session_id  # Include session_id in payload if available
     }
 
     if debug_mode:
@@ -182,7 +196,26 @@ elif st.session_state.api_operational:
 else:
     st.sidebar.error(f"API was previously reported as not operational. Check health or connection to {API_BASE_URL}.")
 
-# Display the current department path from the API response
+# Initialize chat session if not already done
+if not st.session_state.session_id and st.session_state.api_operational:
+    with st.spinner("Initiating new chat session..."):
+        session_id = initiate_new_chat()
+        if session_id:
+            st.session_state.session_id = session_id
+            if debug_mode:
+                st.sidebar.success(f"New chat session initiated: {session_id}")
+        else:
+            st.error("Failed to initiate a new chat session. Please refresh the page.")
+
+# Load and display current path from session file
+if st.session_state.session_id:
+    session_data = load_chat_session_data(st.session_state.session_id)
+    if session_data and "current_path" in session_data:
+        st.session_state.current_resolved_path = session_data["current_path"]
+        if debug_mode:
+            st.sidebar.info(f"Loaded department path from session file: {session_data['current_path']}")
+
+# Display the current department path
 if st.session_state.current_resolved_path:
     st.markdown("#### Current Department Path")
     path_container = st.container(height=None, border=True)
@@ -228,7 +261,7 @@ if user_input:
         api_response = query_api_with_retries(
             actual_chat_history=api_call_history_for_payload,
             user_query=user_input,
-            dept_path=current_dept_path # Use the potentially customized dept_path
+            session_id=st.session_state.session_id  # Include session ID in API calls
         )
 
         # Extract and store the resolved department path if available in the response
@@ -237,15 +270,37 @@ if user_input:
         elif "dept_path" in api_response:
             st.session_state.current_resolved_path = api_response["dept_path"]
         
+        # After getting the API response, check if the session file has been updated
+        if st.session_state.session_id:
+            session_data = load_chat_session_data(st.session_state.session_id)
+            if session_data and "current_path" in session_data:
+                st.session_state.current_resolved_path = session_data["current_path"]
+        
         assistant_response = api_response.get("result", "Sorry, I couldn't get a response from the assistant at this time.")
-        path = api_response.get("path", None)
-        if path:
-            st.session_state.current_resolved_path = path
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
         st.rerun()
 
 if st.sidebar.button("Clear Conversation", type="secondary"):
     st.session_state.chat_history = []
-    st.session_state.current_resolved_path = None  # Also clear the department path
+    # Keep the session ID but refresh path from file
+    if st.session_state.session_id:
+        session_data = load_chat_session_data(st.session_state.session_id)
+        if session_data and "current_path" in session_data:
+            st.session_state.current_resolved_path = session_data["current_path"]
+        else:
+            st.session_state.current_resolved_path = None
+    else:
+        st.session_state.current_resolved_path = None
     st.toast("Conversation cleared!", icon="🗑️")
     st.rerun()
+
+if st.sidebar.button("New Session", type="primary"):
+    st.session_state.chat_history = []
+    st.session_state.current_resolved_path = None
+    st.session_state.session_id = None  # Reset session ID to trigger new session creation
+    st.toast("Starting new session...", icon="🔄")
+    st.rerun()
+
+# Display session ID in sidebar if available
+if st.session_state.session_id and debug_mode:
+    st.sidebar.text(f"Session ID: {st.session_state.session_id}")

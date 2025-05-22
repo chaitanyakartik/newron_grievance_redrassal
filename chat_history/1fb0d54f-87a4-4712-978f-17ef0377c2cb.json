@@ -1,0 +1,44 @@
+{
+  "session_id": "1fb0d54f-87a4-4712-978f-17ef0377c2cb",
+  "history": [
+    {
+      "role": "user",
+      "content": "hi"
+    },
+    {
+      "role": "assistant",
+      "content": "Could you please specify what issue you are facing that relates to the Agriculture Department?"
+    },
+    {
+      "role": "user",
+      "content": "query1=\"i have a problem with my application process, agricutlure realted, related to crop survey\"\n"
+    },
+    {
+      "role": "assistant",
+      "content": "Is your application already submitted but not processed, or is it not being accepted at the RSK (Revenue Survey Khata) stage?"
+    },
+    {
+      "role": "user",
+      "content": "not processed"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "AGRICULTURE DEPARTMENT",
+        "DEPARTMENT OF AGRICULTURE",
+        "KARNATAKA CROP SURVEY- TO CAPTURE THE DETAILS OF CROPS GROWN BY THE FARMING COMMUNITY",
+        "ISSUES RELATED TO APPLICATION",
+        "APPLICATION HAS BEEN SUBMITTED BUT NOT PROCESSED"
+      ]
+    }
+  ],
+  "current_path": [
+    "AGRICULTURE DEPARTMENT",
+    "DEPARTMENT OF AGRICULTURE",
+    "KARNATAKA CROP SURVEY- TO CAPTURE THE DETAILS OF CROPS GROWN BY THE FARMING COMMUNITY",
+    "ISSUES RELATED TO APPLICATION",
+    "APPLICATION HAS BEEN SUBMITTED BUT NOT PROCESSED"
+  ],
+  "path_final": "True",
+  "last_updated": "2025-05-22T14:05:02.855995"
+}
