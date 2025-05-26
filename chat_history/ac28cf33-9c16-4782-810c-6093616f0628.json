@@ -1,0 +1,28 @@
+{
+  "session_id": "ac28cf33-9c16-4782-810c-6093616f0628",
+  "history": [
+    {
+      "role": "user",
+      "content": "I submitted my application for the Kisan Samman Nidhi Scheme through the CSC Center however, it has yet to receive approval from the Karnataka state government. Could you kindly verify and confirm our details"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        "AGRICULTURE DEPARTMENT",
+        "DEPARTMENT OF AGRICULTURE",
+        "PM-KISAN- DISBURSEMENT OF FINANCIALL ASSISTANCE TO THE FARMERS FOR PURCHASE OF AGRI-INPUTS.",
+        "ISSUES RELATED TO APPLICATION",
+        "APPLICATION HAS BEEN SUBMITTED BUT NOT PROCESSED"
+      ]
+    }
+  ],
+  "current_path": [
+    "AGRICULTURE DEPARTMENT",
+    "DEPARTMENT OF AGRICULTURE",
+    "PM-KISAN- DISBURSEMENT OF FINANCIALL ASSISTANCE TO THE FARMERS FOR PURCHASE OF AGRI-INPUTS.",
+    "ISSUES RELATED TO APPLICATION",
+    "APPLICATION HAS BEEN SUBMITTED BUT NOT PROCESSED"
+  ],
+  "path_final": "True",
+  "last_updated": "2025-05-27T01:14:56.664903"
+}

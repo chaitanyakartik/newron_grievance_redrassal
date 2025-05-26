@@ -88,7 +88,7 @@ async def get_history_from_sesh_id(chat_session_id: str):
     for entry in session_data.get("history", []):
         history.append(History(role=entry["role"], content=entry["content"]))
     
-    return history, session_data.get("dept_path", [])
+    return history, session_data.get("current_path", [])
 
 
 async def get_next_children(tree, dept_path):
@@ -211,7 +211,7 @@ async def check_if_final_department(dept_path: List[str]) -> bool:
     Returns:
         True if this is a final department (no children), False otherwise
     """
-    if not dept_path:
+    if not dept_path or len(dept_path) == 0:
         return False
     
     # Navigate to the current node
@@ -278,8 +278,11 @@ async def query_classifier(query: str, chat_session_id: str):
     elif nature == "final_path":
         new_history, new_dept_path = await get_history_from_sesh_id(chat_session_id)
         print("\n\n======FINAL PATH REACHED=========\n\n")
-        update_reached_final(chat_session_id, "True")
+        await update_reached_final(chat_session_id, "True")
         return result, new_dept_path
+    elif nature == "final_path_done":
+        new_history, new_dept_path = await get_history_from_sesh_id(chat_session_id)
+        return "final_path_done", new_dept_path 
     else:
         print("something broke")
         return None, dept_path
@@ -291,6 +294,11 @@ async def attempt_classification(
     session_id: str ,
     history: Optional[List[Content]] = None
 ):
+    is_final = await check_if_final_department(dept_path=dept_path)
+    if is_final:
+        print("Final department reached, no further classification needed.")
+        return "final_path_done", dept_path
+
     template_parts = (
         QUERY_CLASSIFIER_PROMPT,
         f"User Query: {query}",

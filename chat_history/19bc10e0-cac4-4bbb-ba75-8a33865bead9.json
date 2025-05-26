@@ -1,0 +1,21 @@
+{
+  "session_id": "19bc10e0-cac4-4bbb-ba75-8a33865bead9",
+  "history": [
+    {
+      "role": "user",
+      "content": "query1=\\\"i have a problem with my application process, agricutlure realted, related to crop survey"
+    },
+    {
+      "role": "assistant",
+      "content": "Is your application not being accepted at all, or has it been submitted but not yet processed?"
+    }
+  ],
+  "current_path": [
+    "AGRICULTURE DEPARTMENT",
+    "DEPARTMENT OF AGRICULTURE",
+    "KARNATAKA CROP SURVEY- TO CAPTURE THE DETAILS OF CROPS GROWN BY THE FARMING COMMUNITY",
+    "ISSUES RELATED TO APPLICATION"
+  ],
+  "path_final": "False",
+  "last_updated": "2025-05-27T01:25:04.746400"
+}

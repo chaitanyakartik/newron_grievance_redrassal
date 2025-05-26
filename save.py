@@ -7,12 +7,11 @@ import os
 from urllib.parse import urljoin, urlparse
 
 # --- Configuration Constants ---
-# API_BASE_URL = "http://34.93.126.124:8000"
-API_BASE_URL="http://127.0.0.1:8000"
+API_BASE_URL = "http://34.93.126.124:8000"
+# API_BASE_URL="http://127.0.0.1:8000"
 CLASSIFY_ENDPOINT = "/continue_chat_classify"
 HEALTH_CHECK_ENDPOINT = "/health" # Common endpoint for health checks
 INITIATE_CHAT_ENDPOINT = "/initiate_chat" # New endpoint for initiating chat sessions
-GET_CHAT_HISTORY_ENDPOINT = "/chat_history" # Endpoint to get chat history
 
 API_URL = urljoin(API_BASE_URL, CLASSIFY_ENDPOINT)
 HEALTH_CHECK_URL = urljoin(API_BASE_URL, HEALTH_CHECK_ENDPOINT)
@@ -113,35 +112,6 @@ def query_api_with_retries(actual_chat_history, user_query, session_id=None):
     for attempt in range(MAX_RETRIES):
         try:
             response = requests.post(API_URL, json=payload, timeout=REQUEST_TIMEOUT)
-            response_data = response.json()
-
-            if "sesh_id" in response_data:
-                # This means the previous grievance has been resolved and a new session started
-                if debug_mode:
-                    st.sidebar.success(f"Received new session ID: {response_data['sesh_id']}")
-                
-                # Update the session ID
-                st.session_state.session_id = response_data["sesh_id"]
-                
-                # Add a message to inform the user
-                notice_msg = "Previous grievance has been resolved. Starting a new session."
-                if "result" in response_data:
-                    # If there's already a result message, append to it
-                    response_data["result"] = f"{response_data['result']}\n\n{notice_msg}"
-                else:
-                    response_data["result"] = notice_msg
-                
-                # Reset the current resolved path
-                st.session_state.current_resolved_path = None
-
-                payload = { 
-                    "query": response_data["result"],  # Use the result message as the new query
-                    "session_id": st.session_state.session_id  # Use the new session ID
-                }
-                response = requests.post(API_URL, json=payload, timeout=REQUEST_TIMEOUT)
-                response_data = response.json()
-                return response_data
-                # st.rerun()
 
             if debug_mode:
                 st.sidebar.write(f"Attempt {attempt + 1} Status Code:", response.status_code)
@@ -210,6 +180,7 @@ def query_api_with_retries(actual_chat_history, user_query, session_id=None):
     return {"response": "Critical error in API call logic."}
 
 # --- UI Rendering ---
+
 if st.session_state.api_operational is None:
     with st.sidebar:
         with st.spinner(f"Checking API connection to {API_BASE_URL}..."):
@@ -267,67 +238,7 @@ with chat_container:
 
 user_input = st.chat_input("Type your message:")
 
-# # Check if the chat history needs to be refreshed based on session ID
-# GET_CHAT_HISTORY_URL = urljoin(API_BASE_URL, f"{GET_CHAT_HISTORY_ENDPOINT}/{st.session_state.session_id}")
-# try:
-#     response = requests.get(GET_CHAT_HISTORY_URL, timeout=REQUEST_TIMEOUT)
-#     response.raise_for_status()
-#     chat_data = response.json()
-#     if chat_data.get('path_final')=="True":
-#         session_id = initiate_new_chat()
-#         if session_id:
-#             st.session_state.session_id = session_id
-#             if debug_mode:
-#                 st.sidebar.success(f"New chat session initiated: {session_id}")
-
-#         st.rerun()
-# except requests.exceptions.RequestException as e:
-#     st.rerun()
-
-
-# Handle user input
-if user_input and user_input.startswith('/'):
-    # Handle special commands
-    command = user_input.split()[0][1:]  # Extract command name without the '/'
-    params = user_input.split()[1:] if len(user_input.split()) > 1 else []
-    
-    if command == "clear":
-        # Clear conversation history
-        st.session_state.chat_history = []
-        st.rerun()
-    elif command == "help":
-        # Show available commands
-        help_text = """
-        **Available Commands:**
-        - `/clear`: Clear conversation history
-        - `/help`: Show this help message
-        - `/get_resolved_depts`: Get the resolved department path from the current session
-        - `/new_chat_sesh`: Start a new chat session
-        """
-        st.session_state.chat_history.append({"role": "assistant", "content": help_text})
-        st.rerun()
-    elif command == "get_resolved_depts":
-        GET_CHAT_HISTORY_URL = urljoin(API_BASE_URL, f"{GET_CHAT_HISTORY_ENDPOINT}/{st.session_state.session_id}")
-        try:
-            response = requests.get(GET_CHAT_HISTORY_URL, timeout=REQUEST_TIMEOUT)
-            response.raise_for_status()
-            chat_data = response.json()
-            st.session_state.chat_history.append({"role": "assistant", "content": f"Resolved Departments:\n\n\n{chat_data['dept_res']}"})
-            st.rerun()
-        except requests.exceptions.RequestException as e:
-            st.session_state.chat_history.append({"role": "assistant", "content": f"Error retrieving resolved departments: {str(e)}"})
-            st.rerun()
-    elif command == "new_chat_sesh":
-        # Start a new chat session
-        st.session_state.chat_history = []
-        st.session_state.current_resolved_path = None
-        st.session_state.session_id = None
-        st.rerun()
-
-    else:
-        st.session_state.chat_history.append({"role": "assistant", "content": f"Unknown command: `/{command}`. Type `/help` to see available commands."})
-        st.rerun()
-elif user_input:
+if user_input:
     st.session_state.chat_history.append({"role": "user", "content": user_input})
     with chat_container:
          with st.chat_message("user"):
@@ -337,6 +248,10 @@ elif user_input:
         if not st.session_state.api_operational and st.session_state.api_operational is not None:
             st.warning("API is not operational. Attempting to send message anyway...")
 
+        # The API expects the *full* history up to the message *before* the current user_input.
+        # So, if st.session_state.chat_history includes the current user_input,
+        # we need to send all messages *except* the last one.
+        # The last one is the current user_input, which is passed as "query".
         if len(st.session_state.chat_history) > 1:
             api_call_history_for_payload = st.session_state.chat_history[:-1]
         else: # If it's the first message from the user, history is empty
