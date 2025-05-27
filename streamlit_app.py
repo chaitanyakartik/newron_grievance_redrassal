@@ -267,24 +267,6 @@ with chat_container:
 
 user_input = st.chat_input("Type your message:")
 
-# # Check if the chat history needs to be refreshed based on session ID
-# GET_CHAT_HISTORY_URL = urljoin(API_BASE_URL, f"{GET_CHAT_HISTORY_ENDPOINT}/{st.session_state.session_id}")
-# try:
-#     response = requests.get(GET_CHAT_HISTORY_URL, timeout=REQUEST_TIMEOUT)
-#     response.raise_for_status()
-#     chat_data = response.json()
-#     if chat_data.get('path_final')=="True":
-#         session_id = initiate_new_chat()
-#         if session_id:
-#             st.session_state.session_id = session_id
-#             if debug_mode:
-#                 st.sidebar.success(f"New chat session initiated: {session_id}")
-
-#         st.rerun()
-# except requests.exceptions.RequestException as e:
-#     st.rerun()
-
-
 # Handle user input
 if user_input and user_input.startswith('/'):
     # Handle special commands

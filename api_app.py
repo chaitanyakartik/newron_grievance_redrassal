@@ -2,7 +2,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import asyncio
-from utils.chat_utils import query_classifier,add_to_chat_history,get_history_from_sesh_id, check_if_final_department
+from utils.chat_utils import (query_classifier,
+                            add_to_chat_history,
+                            get_history_from_sesh_id, 
+                            check_if_final_department,
+                            check_if_final_department_id)
 import uvicorn
 
 app = FastAPI()
@@ -16,7 +20,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Define the HistoryItem model
 # Define the HistoryItem model
 class HistoryItem(BaseModel):
     role: str
@@ -117,54 +120,6 @@ async def health_check():
     Health check endpoint.
     """
     return {"status": "ok"}
-
-
-import os
-import json
-from pathlib import Path
-
-async def check_if_final_department_id(session_id: str) -> bool:
-    """
-    Check if the given session ID has reached a final department classification.
-    
-    Args:
-        session_id: The session ID to check
-        
-    Returns:
-        bool: True if the path is final for this session, False otherwise
-    """
-    try:
-        # Construct the path to the session file
-        file_path = Path(f"chat_history/{session_id.lower()}.json")
-        
-        # Check if the file exists
-        if not file_path.exists():
-            logger.warning(f"Session file not found for ID: {session_id}")
-            return False
-        
-        # Read and parse the JSON file
-        with open(file_path, 'r') as f:
-            session_data = json.load(f)
-        
-        # Check if path_final exists and is set to true
-        if "path_final" in session_data:
-            # Handle both string "True" and boolean true
-            if isinstance(session_data["path_final"], bool):
-                return session_data["path_final"]
-            elif isinstance(session_data["path_final"], str):
-                return session_data["path_final"].lower() == "true"
-        
-        # If path_final doesn't exist, check if current_path exists
-        # and has enough levels to be considered final
-        if "current_path" in session_data and isinstance(session_data["current_path"], list):
-            # This is a fallback method - we consider a path final if it has 5+ levels
-            # You can adjust this logic based on your requirements
-            return len(session_data["current_path"]) >= 5
-            
-        return False
-    except Exception as e:
-        logger.error(f"Error checking if department is final for session {session_id}: {str(e)}")
-        return False
 
 if __name__ == "__main__":
     uvicorn.run("api_app:app", host="127.0.0.1", port=8000, reload=True)
